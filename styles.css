@@ -77,3 +77,16 @@ h3{font-size:22px}
 .admin-shell{min-height:100vh;background:#f6f1ea}.admin-nav{background:#211612;color:#fff;padding:16px 22px;display:flex;justify-content:space-between;align-items:center}.admin-main{width:min(1200px,calc(100% - 40px));margin:30px auto}.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.stat{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px}.stat strong{font-size:32px;display:block}.admin-card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;margin-top:20px}
 @media(max-width:900px){.hero-grid,.contact-layout,.compliance{grid-template-columns:1fr}.hero-art{min-height:420px}.grid-4{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr 1fr}.footer-grid{grid-template-columns:1fr 1fr}.nav-links{display:none}.nav-links.open{display:flex;position:absolute;left:20px;right:20px;top:70px;background:#fffdf9;padding:20px;border:1px solid var(--line);border-radius:18px;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow)}.menu-btn{display:block}.nav-cta{display:none}}
 @media(max-width:620px){.container{width:min(calc(100% - 28px),var(--max))}.nav{height:68px}.hero{padding:55px 0}.hero-art{min-height:340px}.art-card{width:86%}.section{padding:65px 0}.grid-3,.grid-4,.steps,.form-grid,.stat-grid,.footer-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.banner{padding:30px;flex-direction:column;align-items:flex-start}.section-head{display:block}.section-head p{margin-top:12px}h1{font-size:46px}.lead{font-size:17px}.footer-bottom{display:block}}
+
+/* Uploaded Village Commerce logo */
+.brand-image{display:inline-flex;align-items:center;line-height:0}
+.brand-image img{display:block;width:253px;height:auto;max-height:58px;object-fit:contain;object-position:left center}
+.footer-brand-image img{width:230px;filter:none}
+
+/* Homepage hero video */
+.hero-video-wrap{min-height:0;display:flex;align-items:center;justify-content:center}
+.hero-video-card{position:relative;width:min(560px,100%);border-radius:30px;overflow:hidden;background:#5f120c;box-shadow:0 35px 80px rgba(112,29,19,.24);border:1px solid rgba(255,255,255,.55)}
+.hero-video{display:block;width:100%;aspect-ratio:16/9;height:auto;object-fit:cover;background:#5f120c}
+.video-badge{position:absolute;left:18px;bottom:18px;background:rgba(255,253,249,.94);color:var(--ink);padding:11px 15px;border-radius:999px;font-size:12px;font-weight:900;box-shadow:0 10px 25px rgba(49,27,18,.14)}
+@media(max-width:900px){.brand-image img{width:220px;max-height:52px}.hero-video-card{width:100%;border-radius:24px}}
+@media(max-width:620px){.brand-image img{width:190px;max-height:48px}.hero-video-card{border-radius:20px}.video-badge{left:12px;bottom:12px;font-size:10px;padding:9px 11px}}

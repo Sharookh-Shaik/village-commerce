@@ -1,0 +1,17 @@
+VILLAGE COMMERCE — HERO VIDEO UPDATE
+
+This package already contains the complete website plus:
+- logo.png — the logo supplied by the owner
+- hero-video.mp4 — the supplied animated video
+- updated index.html — uses the logo and video
+- updated styles.css — responsive video styling
+
+DEPLOY:
+1. Back up your current GitHub Desktop repository folder.
+2. Replace the contents of the repository with the contents of this package.
+3. Open GitHub Desktop.
+4. Commit: "Add Village Commerce logo and hero video"
+5. Push origin.
+6. Vercel will deploy automatically.
+
+Do not change DNS settings.
