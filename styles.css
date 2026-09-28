@@ -134,3 +134,30 @@ h3{font-size:22px}
     height: 62px;
   }
 }
+
+/* Homepage header logo — use the uploaded Village Commerce artwork at a larger, readable size */
+.site-header .brand-image img {
+  width: 150px;
+  height: 84px;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 0;
+}
+.site-header .nav {
+  min-height: 90px;
+  height: 90px;
+}
+.footer-brand-image img {
+  width: 180px;
+  height: 150px;
+  object-fit: contain;
+}
+@media (max-width: 900px) {
+  .site-header .brand-image img { width: 135px; height: 78px; }
+  .site-header .nav { min-height: 84px; height: 84px; }
+}
+@media (max-width: 620px) {
+  .site-header .brand-image img { width: 120px; height: 70px; }
+  .site-header .nav { min-height: 76px; height: 76px; }
+}
