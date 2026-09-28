@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Village Commerce Admin</title><link rel="stylesheet" href="../styles.css"></head><body class="admin-shell">
+<div class="admin-nav"><strong>VILLAGE COMMERCE / ADMIN</strong><a href="../index.html" style="color:#fff">View website ↗</a></div>
+<main class="admin-main">
+<div class="notice"><strong>Setup required:</strong> This dashboard is a UI foundation. Before using it with real customer data, connect it to Supabase Authentication + the supplied RLS schema. Do not put service-role keys in browser code.</div>
+<div class="stat-grid">
+<div class="stat"><span>Total enquiries</span><strong id="total">0</strong></div><div class="stat"><span>New</span><strong id="new">0</strong></div><div class="stat"><span>Quoted</span><strong id="quoted">0</strong></div><div class="stat"><span>Closed</span><strong id="closed">0</strong></div>
+</div>
+<div class="admin-card"><h2>Enquiries</h2><p class="lead" style="font-size:15px">The production version should read from the Supabase <code>enquiries</code> table after authentication is configured.</p>
+<div class="table-wrap"><table class="data-table"><thead><tr><th>Customer</th><th>Product</th><th>Quantity</th><th>Destination</th><th>Status</th><th>Date</th></tr></thead><tbody><tr><td colspan="6">No live database connection configured yet.</td></tr></tbody></table></div></div>
+</main></body></html>

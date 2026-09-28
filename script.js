@@ -1,1 +1,29 @@
-document.addEventListener("DOMContentLoaded",()=>{const nav=document.querySelector(".nav-wrap"),toggle=document.querySelector(".menu-toggle");if(toggle)toggle.addEventListener("click",()=>nav.classList.toggle("open"));document.querySelectorAll("#year").forEach(e=>e.textContent=new Date().getFullYear());const params=new URLSearchParams(location.search),product=params.get("product"),select=document.querySelector("#product");if(product&&select){[...select.options].forEach(o=>{if(o.text===product)o.selected=true})}const form=document.querySelector("#quoteForm");if(form){form.addEventListener("submit",e=>{e.preventDefault();const d=new FormData(form);const subject=`Product enquiry — ${d.get("product")||"Red Chilli"}`;const body=`Hello Village Commerce,%0D%0A%0D%0AI would like to enquire about your red chilli products.%0D%0A%0D%0AName: ${encodeURIComponent(d.get("name"))}%0D%0ACompany: ${encodeURIComponent(d.get("company"))}%0D%0AEmail: ${encodeURIComponent(d.get("email"))}%0D%0APhone/WhatsApp: ${encodeURIComponent(d.get("phone"))}%0D%0AProduct: ${encodeURIComponent(d.get("product"))}%0D%0AQuantity: ${encodeURIComponent(d.get("quantity"))}%0D%0ADestination: ${encodeURIComponent(d.get("destination"))}%0D%0AMessage: ${encodeURIComponent(d.get("message"))}%0D%0A%0D%0ARegards,%0D%0A${encodeURIComponent(d.get("name"))}`;location.href=`mailto:sales@villagecommerce.in?subject=${encodeURIComponent(subject)}&body=${body}`})}});
+
+document.addEventListener('DOMContentLoaded',()=>{
+  const menu=document.querySelector('[data-menu]');
+  const links=document.querySelector('.nav-links');
+  if(menu && links) menu.addEventListener('click',()=>links.classList.toggle('open'));
+
+  document.querySelectorAll('[data-year]').forEach(el=>el.textContent=new Date().getFullYear());
+
+  const form=document.querySelector('[data-quote-form]');
+  if(form){
+    form.addEventListener('submit',(e)=>{
+      e.preventDefault();
+      const data=new FormData(form);
+      const body=[
+        `Name: ${data.get('name')}`,
+        `Company: ${data.get('company') || '-'}`,
+        `Email: ${data.get('email')}`,
+        `WhatsApp/Phone: ${data.get('phone')}`,
+        `Product: ${data.get('product')}`,
+        `Quantity: ${data.get('quantity') || '-'}`,
+        `Destination: ${data.get('destination') || '-'}`,
+        `Message: ${data.get('message') || '-'}`
+      ].join('\n');
+      window.location.href=`mailto:sales@villagecommerce.in?subject=${encodeURIComponent('Village Commerce — New Quote Request')}&body=${encodeURIComponent(body)}`;
+      const status=document.querySelector('[data-form-status]');
+      if(status) status.textContent='Your email app should open with the enquiry prepared. If it does not, email sales@villagecommerce.in directly.';
+    });
+  }
+});

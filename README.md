@@ -1,27 +1,41 @@
-# Village Commerce Website
+# Village Commerce — Version 2
 
-A complete responsive static website for Village Commerce.
+A premium static export-business website for Village Commerce.
 
-## Files
-- index.html — homepage
-- about.html — company information
-- products.html — red chilli catalogue
-- quality.html — buyer/quality workflow
-- contact.html — enquiry form + contact details
-- styles.css — all styling
-- script.js — mobile menu, year and enquiry form
-- README.md — this guide
+## Included
+- Completely redesigned responsive UI
+- Home / Products / Quality & Export / About / Request a Quote
+- GST + UDYAM details
+- IEC shown as "Application in process"
+- WhatsApp CTA
+- SEO-friendly metadata
+- Supabase-ready admin/enquiry foundation
+- Supabase RLS schema in `supabase/schema.sql`
 
-## How to use
-1. Open `index.html` in a browser to preview the website.
-2. Upload all files to the public/root folder of the `villagecommerce.in` domain hosting.
-3. Keep all files in the same folder.
+## Deploying the website
+This project can be deployed to Vercel as a static site:
+1. Replace the files in the existing GitHub repository with this package's files.
+2. Commit and push to `main`.
+3. Vercel will automatically deploy the new version.
+4. Keep the existing `villagecommerce.in` DNS records exactly as they are.
 
-## Contact form
-The quote form uses the visitor's email application via `mailto:` and does not store submissions on a server. For a production CRM/form backend, it can later be connected to an email/form service.
+## Admin security
+The included `/admin/` page is intentionally a foundation until Supabase is configured.
+Do NOT put a database password or Supabase service-role key into HTML/JavaScript.
 
-## Important content note
-The product catalogue is a proposed broad Indian red-chilli range. Availability and lot-specific specifications should be confirmed by Village Commerce before commercial use. IEC is intentionally shown as "Application in process" until the actual IEC number is available.
+For production admin:
+1. Create a Supabase project.
+2. Run `supabase/schema.sql` in the Supabase SQL Editor.
+3. Create the admin user(s) in Supabase Authentication.
+4. Implement authenticated reads/updates using the public anon key + RLS.
+5. Never expose the service_role key.
 
-## Temporary visuals
-The hero uses an original CSS illustration rather than copying imagery from reference websites. Original company/product/facility photos can be added later.
+## Business information
+GST: 37ABCFV5880A1Z4
+UDYAM: UDYAM-AP-13-0099296
+IEC: Application in process
+Email: sales@villagecommerce.in
+Phone: +91 80190 90461
+Address: 17-2-14/0049 Kesarigunta Colony, Beside Navayuga Seeds, Kandukur, Prakasam District, Andhra Pradesh — 523105, India.
+
+Real product/company photographs can be substituted later without changing the page structure.
