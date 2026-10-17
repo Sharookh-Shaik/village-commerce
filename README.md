@@ -25,10 +25,11 @@ Do NOT put a database password or Supabase service-role key into HTML/JavaScript
 
 For production admin:
 1. Create a Supabase project.
-2. Run `supabase/schema.sql` in the Supabase SQL Editor.
-3. Create the admin user(s) in Supabase Authentication.
-4. Implement authenticated reads/updates using the public anon key + RLS.
-5. Never expose the service_role key.
+2. For the existing Supabase project, run `supabase/admin-migration.sql` (not `schema.sql`) after reviewing it.
+3. Ensure the trusted admin user exists in Supabase Authentication.
+4. Configure `supabase-config.js` with the project URL and public publishable/anon key.
+5. Deploy and enroll TOTP MFA from `/admin/`.
+6. Never expose the service_role key. See `README-ADMIN-SETUP.md` for detailed steps.
 
 ## Business information
 GST: 37ABCFV5880A1Z4
@@ -45,3 +46,7 @@ Real product/company photographs can be substituted later without changing the p
 - Added supplied chilli harvest, drying and handling photos under `assets/`.
 - Updated the IEC display to `ABCFV5880A` as confirmed by the business owner.
 - Kept the homepage video and existing page structure.
+
+
+## Admin integration note
+For the current Supabase project, review and run `supabase/admin-migration.sql` only. Do not run `supabase/schema.sql` on the existing project. See `README-ADMIN-SETUP.md`.

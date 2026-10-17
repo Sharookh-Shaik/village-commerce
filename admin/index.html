@@ -1,10 +1,128 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Village Commerce Admin</title><link rel="stylesheet" href="../styles.css"></head><body class="admin-shell">
-<div class="admin-nav"><strong>VILLAGE COMMERCE / ADMIN</strong><a href="../index.html" style="color:#fff">View website ↗</a></div>
-<main class="admin-main">
-<div class="notice"><strong>Setup required:</strong> This dashboard is a UI foundation. Before using it with real customer data, connect it to Supabase Authentication + the supplied RLS schema. Do not put service-role keys in browser code.</div>
-<div class="stat-grid">
-<div class="stat"><span>Total enquiries</span><strong id="total">0</strong></div><div class="stat"><span>New</span><strong id="new">0</strong></div><div class="stat"><span>Quoted</span><strong id="quoted">0</strong></div><div class="stat"><span>Closed</span><strong id="closed">0</strong></div>
-</div>
-<div class="admin-card"><h2>Enquiries</h2><p class="lead" style="font-size:15px">The production version should read from the Supabase <code>enquiries</code> table after authentication is configured.</p>
-<div class="table-wrap"><table class="data-table"><thead><tr><th>Customer</th><th>Product</th><th>Quantity</th><th>Destination</th><th>Status</th><th>Date</th></tr></thead><tbody><tr><td colspan="6">No live database connection configured yet.</td></tr></tbody></table></div></div>
-</main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow"><title>Village Commerce Admin</title>
+  <link rel="stylesheet" href="../styles.css">
+  <style>
+    .admin-wrap{max-width:1200px;margin:28px auto;padding:0 20px}.admin-panel{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin:18px 0}.admin-form{display:grid;gap:12px;max-width:520px}.admin-form input,.admin-form select,.admin-form textarea,.status-select{font:inherit;padding:12px;border:1px solid #d9cec3;border-radius:9px;width:100%;background:#fff}.admin-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.admin-msg{padding:12px;border-radius:10px;background:#f6f1ea;margin:12px 0;overflow-wrap:anywhere}.admin-msg.error{background:#fff0ed;color:#8a2414}.admin-msg.success{background:#eaf7ec;color:#1d642c}.admin-hidden{display:none!important}.admin-table{width:100%;border-collapse:collapse;min-width:850px}.admin-table th,.admin-table td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:top}.admin-table th{background:#f7f1ea}.admin-small{font-size:13px;color:#6f5a4d}.admin-qr{max-width:230px;display:block;margin:10px 0}.admin-stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.admin-stat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}.admin-stat strong{display:block;font-size:30px}.admin-table-wrap{overflow:auto}.admin-nav{gap:16px}.admin-nav a{color:#fff}.admin-main h1{font-size:clamp(28px,4vw,42px)}@media(max-width:700px){.admin-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-panel{padding:16px}.admin-wrap{padding:0 12px}}
+  </style>
+</head>
+<body class="admin-shell">
+  <header class="admin-nav"><strong>VILLAGE COMMERCE / ADMIN</strong><a href="../index.html">View website ↗</a></header>
+  <main class="admin-wrap">
+    <div class="notice"><strong>Secure admin:</strong> only <strong>sales@villagecommerce.in</strong> with Authenticator MFA verified can view or update enquiries. Do not share passwords or verification codes.</div>
+    <section id="config-warning" class="admin-msg error admin-hidden"></section>
+    <section id="login-panel" class="admin-panel">
+      <h1>Admin sign in</h1><p class="lead">Sign in with the admin account created in Supabase Authentication.</p>
+      <form id="login-form" class="admin-form">
+        <label>Email<input id="email" type="email" autocomplete="username" required value="sales@villagecommerce.in"></label>
+        <label>Password<input id="password" type="password" autocomplete="current-password" required></label>
+        <button class="btn btn-primary" type="submit">Sign in securely</button>
+      </form>
+      <div id="login-msg" class="admin-msg admin-hidden" role="status"></div>
+    </section>
+    <section id="mfa-panel" class="admin-panel admin-hidden">
+      <h1>Authenticator verification</h1><p id="mfa-intro">Use Microsoft Authenticator or another TOTP app.</p>
+      <div id="enroll-area" class="admin-hidden"><p>Scan this QR code in your authenticator app, then enter the 6-digit code shown in the app.</p><img id="mfa-qr" class="admin-qr" alt="Authenticator enrollment QR code"><p class="admin-small">If scanning is unavailable, enter this setup key manually: <code id="mfa-secret"></code></p></div>
+      <form id="mfa-form" class="admin-form"><label>6-digit authenticator code<input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></label><button class="btn btn-primary" type="submit">Verify and continue</button></form>
+      <div id="mfa-msg" class="admin-msg admin-hidden" role="status"></div>
+    </section>
+    <section id="dashboard" class="admin-hidden">
+      <div class="admin-actions"><h1 style="margin-right:auto">Enquiries</h1><button id="refresh" class="btn btn-secondary" type="button">Refresh</button><button id="logout" class="btn btn-primary" type="button">Sign out</button></div>
+      <div class="admin-stat-grid"><div class="admin-stat">Total<strong id="total">0</strong></div><div class="admin-stat">New<strong id="new-count">0</strong></div><div class="admin-stat">Quoted<strong id="quoted-count">0</strong></div><div class="admin-stat">Closed<strong id="closed-count">0</strong></div></div>
+      <div id="data-msg" class="admin-msg admin-hidden" role="status"></div>
+      <div class="admin-panel"><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Customer</th><th>Contact</th><th>Product / quantity</th><th>Destination / packaging</th><th>Message</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="7">Loading enquiries…</td></tr></tbody></table></div></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../supabase-config.js"></script>
+  <script>
+  (() => {
+    const $ = id => document.getElementById(id);
+    const allowedEmail = 'sales@villagecommerce.in';
+    const configReady = window.VILLAGE_SUPABASE_URL && window.VILLAGE_SUPABASE_ANON_KEY && !window.VILLAGE_SUPABASE_ANON_KEY.includes('PASTE_YOUR_');
+    let client, pendingFactorId = null, pendingChallengeId = null, enrolling = false;
+    const show = id => $(id).classList.remove('admin-hidden');
+    const hide = id => $(id).classList.add('admin-hidden');
+    const message = (id, text, kind='') => { const el=$(id); el.textContent=text; el.className='admin-msg'+(kind?' '+kind:''); };
+    const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function setupError(text){ message('config-warning',text,'error'); show('config-warning'); }
+    if (!configReady || !window.supabase?.createClient) {
+      setupError('Configuration needed: open supabase-config.js and add the project publishable/anon key from Supabase Connect/API Keys. Use only the public publishable/anon key here — never a service_role or secret key.');
+      return;
+    }
+    client = window.supabase.createClient(window.VILLAGE_SUPABASE_URL, window.VILLAGE_SUPABASE_ANON_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    $('login-form').addEventListener('submit', async e => {
+      e.preventDefault(); hide('login-msg');
+      const email=$('email').value.trim().toLowerCase();
+      if(email !== allowedEmail){ message('login-msg','This dashboard is restricted to sales@villagecommerce.in.','error'); show('login-msg'); return; }
+      const {error}=await client.auth.signInWithPassword({email,password:$('password').value});
+      if(error){ message('login-msg',error.message,'error'); show('login-msg'); return; }
+      $('password').value=''; await startMfa();
+    });
+    async function startMfa(){
+      hide('login-panel'); hide('dashboard'); show('mfa-panel'); hide('enroll-area'); hide('mfa-msg');
+      const {data: userData,error:userErr}=await client.auth.getUser();
+      if(userErr || !userData.user || userData.user.email?.toLowerCase()!==allowedEmail){ await client.auth.signOut(); show('login-panel'); hide('mfa-panel'); message('login-msg','Only the approved admin account can sign in.','error'); show('login-msg'); return; }
+      const {data: assurance,error:assuranceErr}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+      if(assuranceErr){ message('mfa-msg',assuranceErr.message,'error'); show('mfa-msg'); return; }
+      if(assurance.currentLevel==='aal2'){ await loadDashboard(); return; }
+      const {data: factors,error}=await client.auth.mfa.listFactors();
+      if(error){ message('mfa-msg',error.message,'error'); show('mfa-msg'); return; }
+      const verified=(factors.totp||[]).find(f=>f.status==='verified');
+      if(verified){
+        enrolling=false; pendingFactorId=verified.id;
+        const {data: challenge,error:challengeError}=await client.auth.mfa.challenge({factorId:pendingFactorId});
+        if(challengeError){ message('mfa-msg',challengeError.message,'error'); show('mfa-msg'); return; }
+        pendingChallengeId=challenge.id; $('mfa-intro').textContent='Enter the current 6-digit code from your authenticator app.'; show('mfa-form');
+      } else {
+        enrolling=true;
+        const {data: factor,error:enrollError}=await client.auth.mfa.enroll({factorType:'totp',friendlyName:'Village Commerce Admin'});
+        if(enrollError){ message('mfa-msg',enrollError.message,'error'); show('mfa-msg'); return; }
+        pendingFactorId=factor.id; $('mfa-qr').src=factor.totp.qr_code; $('mfa-secret').textContent=factor.totp.secret; show('enroll-area'); $('mfa-intro').textContent='Set up Microsoft Authenticator, then verify the first code to finish enrollment.';
+      }
+    }
+    $('mfa-form').addEventListener('submit', async e=>{
+      e.preventDefault(); hide('mfa-msg'); const code=$('mfa-code').value.trim();
+      if(!pendingFactorId){message('mfa-msg','No MFA factor is ready. Sign out and sign in again.','error');show('mfa-msg');return;}
+      if(enrolling){
+        const {data: challenge,error:challengeError}=await client.auth.mfa.challenge({factorId:pendingFactorId});
+        if(challengeError){message('mfa-msg',challengeError.message,'error');show('mfa-msg');return;}
+        const {error}=await client.auth.mfa.verify({factorId:pendingFactorId,challengeId:challenge.id,code});
+        if(error){message('mfa-msg',error.message,'error');show('mfa-msg');return;}
+        enrolling=false; $('mfa-code').value=''; await loadDashboard();
+      } else {
+        const {error}=await client.auth.mfa.verify({factorId:pendingFactorId,challengeId:pendingChallengeId,code});
+        if(error){message('mfa-msg',error.message,'error');show('mfa-msg');return;}
+        $('mfa-code').value=''; await loadDashboard();
+      }
+    });
+    async function loadDashboard(){
+      const {data:userData,error:userError}=await client.auth.getUser();
+      const {data:level,error:levelError}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
+      if(userError||levelError||userData.user?.email?.toLowerCase()!==allowedEmail||level.currentLevel!=='aal2'){
+        message('mfa-msg','MFA verification is required before accessing enquiries.','error');show('mfa-msg');return;
+      }
+      hide('login-panel');hide('mfa-panel');show('dashboard');await refreshRows();
+    }
+    async function refreshRows(){
+      message('data-msg','Loading enquiries…');show('data-msg');
+      const {data,error}=await client.from('enquiries').select('*').order('created_at',{ascending:false}).limit(500);
+      if(error){message('data-msg','Could not load enquiries: '+error.message,'error');show('data-msg');$('rows').innerHTML='<tr><td colspan="7">No data available. Check that the admin migration SQL has been applied.</td></tr>';return;}
+      const rows=data||[]; $('total').textContent=rows.length; $('new-count').textContent=rows.filter(r=>r.status==='New').length; $('quoted-count').textContent=rows.filter(r=>r.status==='Quoted').length; $('closed-count').textContent=rows.filter(r=>r.status==='Closed').length;
+      hide('data-msg');
+      if(!rows.length){$('rows').innerHTML='<tr><td colspan="7">No enquiries yet.</td></tr>';return;}
+      $('rows').innerHTML=rows.map(r=>`<tr><td>${esc(r.created_at?new Date(r.created_at).toLocaleString():'')}</td><td><strong>${esc(r.name)}</strong><br>${esc(r.company||'')}</td><td><a href="mailto:${esc(r.email)}">${esc(r.email)}</a><br>${esc(r.phone||'')}</td><td>${esc(r.product)}<br>${esc(r.quantity||'')}</td><td>${esc(r.destination||'')}<br>${esc(r.packaging||'')}</td><td>${esc(r.message||'')}</td><td><select class="status-select" data-status-id="${esc(r.id)}" aria-label="Update status for ${esc(r.name)}">${['New','Contacted','Quoted','Closed'].map(s=>`<option ${r.status===s?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('');
+      document.querySelectorAll('[data-status-id]').forEach(select=>select.addEventListener('change',async()=>{
+        select.disabled=true; const {error}=await client.from('enquiries').update({status:select.value,updated_at:new Date().toISOString()}).eq('id',select.dataset.statusId);
+        select.disabled=false; if(error){message('data-msg','Status update failed: '+error.message,'error');show('data-msg');await refreshRows();}else await refreshRows();
+      }));
+    }
+    $('refresh').addEventListener('click',refreshRows);
+    $('logout').addEventListener('click',async()=>{await client.auth.signOut();hide('dashboard');hide('mfa-panel');show('login-panel');});
+    client.auth.getSession().then(async({data})=>{if(data.session) await startMfa();});
+  })();
+  </script>
+</body>
+</html>
