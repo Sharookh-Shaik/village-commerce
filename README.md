@@ -39,3 +39,9 @@ Phone: +91 80190 90461
 Address: 17-2-14/0049 Kesarigunta Colony, Beside Navayuga Seeds, Kandukur, Prakasam District, Andhra Pradesh — 523105, India.
 
 Real product/company photographs can be substituted later without changing the page structure.
+
+
+## Latest content update
+- Added supplied chilli harvest, drying and handling photos under `assets/`.
+- Updated the IEC display to `ABCFV5880A` as confirmed by the business owner.
+- Kept the homepage video and existing page structure.
