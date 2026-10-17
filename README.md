@@ -50,3 +50,6 @@ Real product/company photographs can be substituted later without changing the p
 
 ## Admin integration note
 For the current Supabase project, review and run `supabase/admin-migration.sql` only. Do not run `supabase/schema.sql` on the existing project. See `README-ADMIN-SETUP.md`.
+
+## Two-phone MFA update
+The admin dashboard supports enrolling multiple Authenticator apps on the same `sales@villagecommerce.in` account. Sign in, select **Add another phone**, scan the QR code on the second phone, verify its code, then test login with the factor selector. See `README-ADMIN-SETUP.md`. Do not rerun the migration on the existing project.

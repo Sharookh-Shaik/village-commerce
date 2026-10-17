@@ -1,27 +1,34 @@
-# Village Commerce — Corrected Admin Integration Package
+# Village Commerce — Website + Two-Phone Admin MFA
 
-This package includes the full website plus corrected enquiry form handling, browser Supabase config, admin login/MFA page, and SQL migration.
+## What this update does
+- Keeps the current Village Commerce website, supplied logo, chilli photos, hero video, Supabase config, and enquiries workflow.
+- Admin login remains restricted to `sales@villagecommerce.in` and requires a verified Authenticator MFA factor.
+- Lets the same account enroll a second TOTP authenticator phone from the dashboard using **Add another phone**.
+- At sign-in, when more than one authenticator is enrolled, the user can choose which phone they are using before entering its 6-digit code.
+- Enquiries can be moved through New, Contacted, Quoted, and Closed.
 
-## Replace files in GitHub Desktop's repository folder
-1. Download this ZIP and choose **Extract All**.
-2. Open the extracted folder.
-3. Open GitHub Desktop → select `village-commerce` → **Show in Explorer**.
-4. Copy all files and folders from the extracted folder into the repository root, allowing files to be replaced.
-5. The package already includes the Supabase project URL and the browser-safe publishable key configured in this session. Do not replace it with a `sb_secret_` or `service_role` key.
-6. Do not commit/push until the SQL migration has been run and the site has been tested.
+## Install the package
+1. Download the ZIP and choose **Extract All**.
+2. Open the extracted folder. Select all its contents (including `admin`, `assets`, and `supabase`) and copy them.
+3. Open GitHub Desktop and select the `village-commerce` repository.
+4. Choose **Repository → Show in Explorer**.
+5. Paste into the repository's top-level folder. Choose **Replace files in destination** when Windows asks. Do not delete the repository's `.git` folder.
+6. Open `https://www.villagecommerce.in/admin/` after Vercel finishes deploying.
+7. In GitHub Desktop, review the changed files, commit with `Enable two-phone admin MFA`, and click **Push origin**. Vercel should deploy automatically.
 
-## Supabase migration for the existing project
-- Run `supabase/admin-migration.sql` only, after reviewing it.
-- Do NOT run `supabase/schema.sql` on the existing project; it is a reference for a new project only.
-- Migration preserves existing rows, adds missing columns, removes prior policies on `public.enquiries`, and sets insert-only public access plus admin-only read/update requiring email `sales@villagecommerce.in` and JWT assurance level `aal2`.
-- Confirm the existing table's column names/types match before running. This package expects `public.enquiries` columns `id`, `created_at`, `name`, `company`, `email`, `phone`, `product`, `quantity`, `destination`, `packaging`, `message`, `status`, and `updated_at` (the migration adds destination, packaging, updated_at if missing).
+## Add your friend's phone
+1. First make sure your own authenticator can still sign in to `/admin/`.
+2. On your computer, sign in to `/admin/` with `sales@villagecommerce.in` and complete MFA.
+3. Click **Add another phone**.
+4. Keep the QR code visible only to your friend. On your friend's phone, open Microsoft Authenticator, tap **+**, choose **Other account**, and scan the QR code. If the camera scan does not work, use the displayed setup key manually.
+5. Enter the current 6-digit code generated on your friend's phone and click **Verify and add this phone**.
+6. Once the dashboard returns, sign out and test a fresh login. Choose your phone or your friend's phone from the authenticator dropdown and enter that phone's current code.
 
-## Admin account and MFA
-- Supabase Authentication must have a user for `sales@villagecommerce.in` with a working password.
-- TOTP is enabled in the Supabase project settings. First sign-in to `/admin/` will enroll an authenticator factor if none is enrolled, then require a 6-digit code.
-- Only use the admin dashboard after MFA enrollment is verified and the migration is successful.
+Important: enrolling a new factor may sign out other active sessions according to Supabase's MFA behavior. Both phones are separate factors on the same account; they do not have separate user identities. Keep the account password private and never send 6-digit codes or the QR/setup secret in chat. If a phone is lost, remove its factor from a trusted session and re-enroll as needed.
 
-## Important
-- Browser publishable keys are designed to be public; database security depends on RLS policies.
-- Never put `sb_secret_...`, `service_role`, database passwords, or private credentials into browser files.
-- This ZIP does not deploy the site or execute SQL. It must be copied into the local repository, tested, then committed/pushed.
+## Supabase notes
+- The browser config contains only the project's public publishable key. This key is designed to be visible in a browser; never put an `sb_secret_` or `service_role` key in the website.
+- The SQL migration was already run in the current Supabase project in this setup. **Do not run `supabase/admin-migration.sql` again as part of this website update.** It is included for reference only.
+- Do not run `supabase/schema.sql` on the existing project.
+- Database permissions rely on Row Level Security requiring `sales@villagecommerce.in` and MFA assurance level `aal2` for reading/updating enquiries.
+- This ZIP cannot deploy by itself. Copy, commit, push, and allow Vercel to deploy.

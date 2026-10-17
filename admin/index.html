@@ -24,12 +24,14 @@
     </section>
     <section id="mfa-panel" class="admin-panel admin-hidden">
       <h1>Authenticator verification</h1><p id="mfa-intro">Use Microsoft Authenticator or another TOTP app.</p>
-      <div id="enroll-area" class="admin-hidden"><p>Scan this QR code in your authenticator app, then enter the 6-digit code shown in the app.</p><img id="mfa-qr" class="admin-qr" alt="Authenticator enrollment QR code"><p class="admin-small">If scanning is unavailable, enter this setup key manually: <code id="mfa-secret"></code></p></div>
-      <form id="mfa-form" class="admin-form"><label>6-digit authenticator code<input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></label><button class="btn btn-primary" type="submit">Verify and continue</button></form>
+      <div id="factor-choice-area" class="admin-hidden"><label>Choose which phone to use<select id="factor-choice" class="status-select"></select></label><p class="admin-small">Choose the authenticator phone currently with you. Each phone has its own 6-digit code.</p></div>
+      <div id="enroll-area" class="admin-hidden"><p id="enroll-instructions">Scan this QR code in the authenticator app on the phone being added, then enter the 6-digit code shown in that app.</p><img id="mfa-qr" class="admin-qr" alt="Authenticator enrollment QR code"><p class="admin-small">If scanning is unavailable, enter this setup key manually: <code id="mfa-secret"></code></p></div>
+      <form id="mfa-form" class="admin-form"><label>6-digit authenticator code<input id="mfa-code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required></label><button id="mfa-submit" class="btn btn-primary" type="submit">Verify and continue</button><button id="mfa-cancel" class="btn btn-secondary admin-hidden" type="button">Cancel</button></form>
       <div id="mfa-msg" class="admin-msg admin-hidden" role="status"></div>
     </section>
     <section id="dashboard" class="admin-hidden">
-      <div class="admin-actions"><h1 style="margin-right:auto">Enquiries</h1><button id="refresh" class="btn btn-secondary" type="button">Refresh</button><button id="logout" class="btn btn-primary" type="button">Sign out</button></div>
+      <div class="admin-actions"><h1 style="margin-right:auto">Enquiries</h1><button id="add-phone" class="btn btn-secondary" type="button">Add another phone</button><button id="refresh" class="btn btn-secondary" type="button">Refresh</button><button id="logout" class="btn btn-primary" type="button">Sign out</button></div>
+      <div class="admin-small" id="factor-summary" style="margin:8px 0 16px"></div>
       <div class="admin-stat-grid"><div class="admin-stat">Total<strong id="total">0</strong></div><div class="admin-stat">New<strong id="new-count">0</strong></div><div class="admin-stat">Quoted<strong id="quoted-count">0</strong></div><div class="admin-stat">Closed<strong id="closed-count">0</strong></div></div>
       <div id="data-msg" class="admin-msg admin-hidden" role="status"></div>
       <div class="admin-panel"><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Date</th><th>Customer</th><th>Contact</th><th>Product / quantity</th><th>Destination / packaging</th><th>Message</th><th>Status</th></tr></thead><tbody id="rows"><tr><td colspan="7">Loading enquiries…</td></tr></tbody></table></div></div>
@@ -42,12 +44,14 @@
     const $ = id => document.getElementById(id);
     const allowedEmail = 'sales@villagecommerce.in';
     const configReady = window.VILLAGE_SUPABASE_URL && window.VILLAGE_SUPABASE_ANON_KEY && !window.VILLAGE_SUPABASE_ANON_KEY.includes('PASTE_YOUR_');
-    let client, pendingFactorId = null, pendingChallengeId = null, enrolling = false;
+    let client, pendingFactorId = null, pendingChallengeId = null, enrolling = false, addingPhone = false, verifiedFactors = [];
     const show = id => $(id).classList.remove('admin-hidden');
     const hide = id => $(id).classList.add('admin-hidden');
     const message = (id, text, kind='') => { const el=$(id); el.textContent=text; el.className='admin-msg'+(kind?' '+kind:''); };
     const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     function setupError(text){ message('config-warning',text,'error'); show('config-warning'); }
+    function showMfaPanel(){ hide('login-panel'); hide('dashboard'); show('mfa-panel'); hide('mfa-msg'); }
+    function resetMfaUI(){ hide('enroll-area'); hide('factor-choice-area'); hide('mfa-cancel'); $('mfa-code').value=''; $('mfa-form').classList.remove('admin-hidden'); }
     if (!configReady || !window.supabase?.createClient) {
       setupError('Configuration needed: open supabase-config.js and add the project publishable/anon key from Supabase Connect/API Keys. Use only the public publishable/anon key here — never a service_role or secret key.');
       return;
@@ -62,7 +66,7 @@
       $('password').value=''; await startMfa();
     });
     async function startMfa(){
-      hide('login-panel'); hide('dashboard'); show('mfa-panel'); hide('enroll-area'); hide('mfa-msg');
+      showMfaPanel(); resetMfaUI();
       const {data: userData,error:userErr}=await client.auth.getUser();
       if(userErr || !userData.user || userData.user.email?.toLowerCase()!==allowedEmail){ await client.auth.signOut(); show('login-panel'); hide('mfa-panel'); message('login-msg','Only the approved admin account can sign in.','error'); show('login-msg'); return; }
       const {data: assurance,error:assuranceErr}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -70,18 +74,32 @@
       if(assurance.currentLevel==='aal2'){ await loadDashboard(); return; }
       const {data: factors,error}=await client.auth.mfa.listFactors();
       if(error){ message('mfa-msg',error.message,'error'); show('mfa-msg'); return; }
-      const verified=(factors.totp||[]).find(f=>f.status==='verified');
-      if(verified){
-        enrolling=false; pendingFactorId=verified.id;
-        const {data: challenge,error:challengeError}=await client.auth.mfa.challenge({factorId:pendingFactorId});
-        if(challengeError){ message('mfa-msg',challengeError.message,'error'); show('mfa-msg'); return; }
-        pendingChallengeId=challenge.id; $('mfa-intro').textContent='Enter the current 6-digit code from your authenticator app.'; show('mfa-form');
+      verifiedFactors=(factors.totp||[]).filter(f=>f.status==='verified');
+      if(verifiedFactors.length){
+        enrolling=false; addingPhone=false;
+        $('factor-choice').innerHTML=verifiedFactors.map((f,i)=>`<option value="${esc(f.id)}">${esc(f.friendly_name||`Authenticator ${i+1}`)}</option>`).join('');
+        show('factor-choice-area');
+        $('factor-choice').onchange=()=>createLoginChallenge($('factor-choice').value);
+        $('mfa-intro').textContent='Choose the phone you have with you, then enter the current 6-digit code from that authenticator app.';
+        show('mfa-form'); await createLoginChallenge(verifiedFactors[0].id);
       } else {
-        enrolling=true;
-        const {data: factor,error:enrollError}=await client.auth.mfa.enroll({factorType:'totp',friendlyName:'Village Commerce Admin'});
-        if(enrollError){ message('mfa-msg',enrollError.message,'error'); show('mfa-msg'); return; }
-        pendingFactorId=factor.id; $('mfa-qr').src=factor.totp.qr_code; $('mfa-secret').textContent=factor.totp.secret; show('enroll-area'); $('mfa-intro').textContent='Set up Microsoft Authenticator, then verify the first code to finish enrollment.';
+        await beginEnrollment(false);
       }
+    }
+    async function createLoginChallenge(factorId){
+      pendingFactorId=factorId; pendingChallengeId=null; hide('mfa-msg');
+      const {data: challenge,error}=await client.auth.mfa.challenge({factorId});
+      if(error){message('mfa-msg',error.message,'error');show('mfa-msg');return;}
+      pendingChallengeId=challenge.id;
+    }
+    async function beginEnrollment(isAdditional){
+      showMfaPanel(); resetMfaUI(); enrolling=true; addingPhone=!!isAdditional; pendingChallengeId=null;
+      $('mfa-intro').textContent=isAdditional?'Add a second phone to this same admin account. Keep this QR code private and scan it only on your friend’s phone.':'Set up an authenticator app to protect the admin account.';
+      $('mfa-submit').textContent=isAdditional?'Verify and add this phone':'Verify and continue';
+      $('enroll-instructions').textContent=isAdditional?'On your friend’s phone, open Microsoft Authenticator, tap +, choose Other account, and scan this QR code. Then enter the 6-digit code from your friend’s phone below.':'Scan this QR code in your authenticator app, then enter the 6-digit code shown in the app.';
+      const {data: factor,error}=await client.auth.mfa.enroll({factorType:'totp',friendlyName:isAdditional?'Village Commerce - Friend phone':'Village Commerce - Primary phone'});
+      if(error){message('mfa-msg',error.message,'error');show('mfa-msg');return;}
+      pendingFactorId=factor.id; $('mfa-qr').src=factor.totp.qr_code; $('mfa-secret').textContent=factor.totp.secret; show('enroll-area'); hide('factor-choice-area'); show('mfa-form'); show('mfa-cancel');
     }
     $('mfa-form').addEventListener('submit', async e=>{
       e.preventDefault(); hide('mfa-msg'); const code=$('mfa-code').value.trim();
@@ -91,21 +109,28 @@
         if(challengeError){message('mfa-msg',challengeError.message,'error');show('mfa-msg');return;}
         const {error}=await client.auth.mfa.verify({factorId:pendingFactorId,challengeId:challenge.id,code});
         if(error){message('mfa-msg',error.message,'error');show('mfa-msg');return;}
-        enrolling=false; $('mfa-code').value=''; await loadDashboard();
+        enrolling=false; addingPhone=false; $('mfa-code').value=''; await loadDashboard();
       } else {
+        if(!pendingChallengeId){ await createLoginChallenge(pendingFactorId); if(!pendingChallengeId) return; }
         const {error}=await client.auth.mfa.verify({factorId:pendingFactorId,challengeId:pendingChallengeId,code});
         if(error){message('mfa-msg',error.message,'error');show('mfa-msg');return;}
         $('mfa-code').value=''; await loadDashboard();
       }
     });
+    $('mfa-cancel').addEventListener('click',async()=>{ if(enrolling && pendingFactorId){ await client.auth.mfa.unenroll({factorId:pendingFactorId}); } enrolling=false;addingPhone=false;pendingFactorId=null;hide('mfa-panel');await loadDashboard(); });
     async function loadDashboard(){
       const {data:userData,error:userError}=await client.auth.getUser();
       const {data:level,error:levelError}=await client.auth.mfa.getAuthenticatorAssuranceLevel();
       if(userError||levelError||userData.user?.email?.toLowerCase()!==allowedEmail||level.currentLevel!=='aal2'){
         message('mfa-msg','MFA verification is required before accessing enquiries.','error');show('mfa-msg');return;
       }
-      hide('login-panel');hide('mfa-panel');show('dashboard');await refreshRows();
+      hide('login-panel');hide('mfa-panel');show('dashboard');
+      const {data:factors}=await client.auth.mfa.listFactors();
+      const verified=(factors?.totp||[]).filter(f=>f.status==='verified');
+      $('factor-summary').textContent=`Authenticator phones enrolled: ${verified.length}. Add the second phone here; each phone uses its own code.`;
+      await refreshRows();
     }
+    $('add-phone').addEventListener('click',async()=>{ await beginEnrollment(true); });
     async function refreshRows(){
       message('data-msg','Loading enquiries…');show('data-msg');
       const {data,error}=await client.from('enquiries').select('*').order('created_at',{ascending:false}).limit(500);
